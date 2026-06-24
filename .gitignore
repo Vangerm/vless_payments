@@ -1,0 +1,39 @@
+### Python environments
+venv/
+.venv/
+__pypackages__/
+
+### Python caches
+__pycache__/
+.mypy*
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+
+### Editors/IDE
+.vscode/
+.idea/
+
+### OS
+.DS_Store
+
+### Config and secrets
+.env
+*config*.yaml
+*config*.yml
+
+### Logs and generated artifacts
+*.log
+*.csv
+
+### Containers
+*docker-compose.yml
+
+### Repo-local folders
+/tresh/
+/!env/
+/*.egg-info/
+
+### Misc
+test*
