@@ -34,6 +34,3 @@ coverage.xml
 /tresh/
 /!env/
 /*.egg-info/
-
-### Misc
-test*
