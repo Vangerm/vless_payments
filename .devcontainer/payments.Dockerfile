@@ -28,6 +28,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && \
     find /usr/local -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 
-COPY app/ /app/
+COPY ./app /app/app
 
 CMD ["python", "-m", "app"]
