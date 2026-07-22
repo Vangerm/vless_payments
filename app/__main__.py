@@ -1,25 +1,26 @@
 import asyncio
 import logging.config
+from pathlib import Path
 
 import uvicorn
 
 from yookassa import Configuration
 
-from app.config_reader import (
+from app.config_data.config_reader import (
     get_config,
     PaymentConfig,
     NalogConfig,
     NatsConfig,
     ServerConfig,
 )
-from app.nats_client import create_nats_connection
-from app.webhook_server import create_app
+from app.loger.logging_settings import logging_config
+from app.nats_client.client import create_nats_connection
+from app.server.webhook import create_app
 
+# Создаём директорию для логов, если её нет
+Path("./app/logs").mkdir(parents=True, exist_ok=True)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
+logging.config.dictConfig(logging_config)
 logger = logging.getLogger(__name__)
 
 

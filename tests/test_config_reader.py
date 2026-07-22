@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from app.config_reader import (
+from app.config_data.config_reader import (
     parse_config_file,
     get_config,
     PaymentConfig,

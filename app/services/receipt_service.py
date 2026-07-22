@@ -16,7 +16,7 @@ async def create_nalog_receipt(
     Returns:
         (успех, ссылка на чек или None)
     """
-    async with NpdClient(inn=inn, password=password) as client:
+    async with NpdClient(inn=inn, password=password, enable_logging=True) as client:
         try:
             await client.auth()
             income = await client.create_check(
@@ -25,17 +25,20 @@ async def create_nalog_receipt(
                     "на услуги настройки пк и смартфонов."
                 ),
                 amount=amount,
-                payment_type=PaymentType.CASH,
+                payment_type=PaymentType.ACCOUNT,
             )
             receipt_link = (
                 f"https://lknpd.nalog.ru/api/v1/receipt/"
                 f"{inn}/{income.approved_receipt_uuid}/print"
             )
             logger.info(
-                "Nalog receipt created: uuid=%s",
+                "Nalog receipt created: uuid=%s, link=%s",
                 income.approved_receipt_uuid,
+                receipt_link,
             )
             return True, receipt_link
         except Exception as e:
-            logger.error("Failed to create nalog receipt: %s", e)
+            logger.exception(
+                "Failed to create nalog receipt: %s", e,
+            )
             return False, None

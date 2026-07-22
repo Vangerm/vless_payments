@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from app.webhook_server import create_app
+from app.server.webhook import create_app
 
 
 def _make_payload(status: str = "succeeded", payment_id: str = "pay_123"):
@@ -21,7 +21,6 @@ def _make_payload(status: str = "succeeded", payment_id: str = "pay_123"):
                 "telegram_id": "12345",
                 "message_id": "555",
                 "chat_id": "12345",
-                "reciept_control": "True",
             },
         },
     }
@@ -67,19 +66,18 @@ class TestWebhook:
         )
         assert response.status_code == 202
 
-    @patch("app.webhook_server.Payment.find_one")
-    @patch("app.webhook_server.create_nalog_receipt")
+    @patch("app.server.webhook.Payment.find_one")
+    @patch("app.server.webhook.create_nalog_receipt")
     def test_successful_payment(
         self, mock_receipt, mock_find_one, client
     ):
-        """Успешный платёж — 200, публикуется NATS."""
+        """Успешный платёж — 200, создаётся чек, публикуется NATS."""
         mock_find_one.return_value.status = "succeeded"
         mock_find_one.return_value.amount.value = "100.00"
         mock_find_one.return_value.metadata = {
             "telegram_id": "12345",
             "message_id": "555",
             "chat_id": "12345",
-            "reciept_control": "True",
         }
         mock_receipt.return_value = (True, "https://receipt.url/print")
 
@@ -91,17 +89,16 @@ class TestWebhook:
         mock_find_one.assert_called_once_with("pay_123")
         mock_receipt.assert_awaited_once()
 
-    @patch("app.webhook_server.Payment.find_one")
-    @patch("app.webhook_server.create_nalog_receipt")
-    def test_payment_no_receipt(
+    @patch("app.server.webhook.Payment.find_one")
+    @patch("app.server.webhook.create_nalog_receipt")
+    def test_successful_payment_receipt_failed(
         self, mock_receipt, mock_find_one, client
     ):
-        """Без чека (reciept_control=False)."""
+        """Платёж успешен, чек не создался — всё равно 200, NATS публикуется."""
         mock_find_one.return_value.status = "succeeded"
         mock_find_one.return_value.amount.value = "100.00"
         mock_find_one.return_value.metadata = {
             "telegram_id": "12345",
-            "reciept_control": "False",
         }
         mock_receipt.return_value = (False, None)
 
@@ -109,9 +106,10 @@ class TestWebhook:
         response = client.post("/yookassa/webhook", json=payload)
 
         assert response.status_code == 200
-        mock_receipt.assert_not_awaited()
+        mock_find_one.assert_called_once_with("pay_123")
+        mock_receipt.assert_awaited_once()
 
-    @patch("app.webhook_server.Payment.find_one")
+    @patch("app.server.webhook.Payment.find_one")
     def test_payment_status_not_succeeded(self, mock_find_one, client):
         """Платёж ещё не succeeded."""
         mock_find_one.return_value.status = "pending"

@@ -5,8 +5,8 @@ from fastapi.responses import JSONResponse
 
 from yookassa import Configuration, Payment
 
-from app.nats_client import publish_payment_success
-from app.receipt_service import create_nalog_receipt
+from app.nats_client.publisher import publish_payment_success
+from app.services.receipt_service import create_nalog_receipt
 
 logger = logging.getLogger(__name__)
 
@@ -85,17 +85,13 @@ def create_app(nc, nats_subject: str, nalog_inn: str, nalog_password: str):
 
         message_id = metadata.get("message_id")
         chat_id = metadata.get("chat_id")
-        reciept_control = metadata.get("reciept_control", "False") == "True"
 
-        # Создаём чек в ЛК НПД если нужно
-        receipt_status = False
-        receipt_link = None
-        if reciept_control:
-            receipt_status, receipt_link = await create_nalog_receipt(
-                inn=nalog_inn,
-                password=nalog_password,
-                amount=amount_value,
-            )
+        # Всегда создаём чек в ЛК НПД
+        receipt_status, receipt_link = await create_nalog_receipt(
+            inn=nalog_inn,
+            password=nalog_password,
+            amount=amount_value,
+        )
 
         # Публикуем NATS-сообщение для бота
         await publish_payment_success(
