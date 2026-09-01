@@ -22,11 +22,14 @@ WORKDIR /app
 RUN apt-get update -yqq \
  && apt-get install --no-install-recommends -yqq \
       libpq-dev \
+      git \
  && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    find /usr/local -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+RUN pip install --no-cache-dir -r requirements.txt \
+ && apt-get purge -y --auto-remove git \
+ && rm -rf /var/lib/apt/lists/* \
+ && { find /usr/local -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true; }
 
 COPY ./app /app/app
 
