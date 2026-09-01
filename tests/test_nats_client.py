@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from app.nats_client import publish_payment_success
+from app.nats_client.publisher import publish_payment_success
 
 
 class TestNatsClient:

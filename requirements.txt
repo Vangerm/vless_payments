@@ -34,5 +34,5 @@ typing-inspection==0.4.2
 urllib3==2.6.3
 uvicorn[standard]==0.34.2
 yarl==1.23.0
-nalogovich==1.0.8
+nalogovich @ git+https://github.com/Vangerm/nalogovich.git@fix/payment-type
 yookassa==3.10.1
