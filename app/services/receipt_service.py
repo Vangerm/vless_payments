@@ -25,7 +25,7 @@ async def create_nalog_receipt(
                     "на услуги настройки пк и смартфонов."
                 ),
                 amount=amount,
-                payment_type=PaymentType.ACCOUNT,
+                payment_type=PaymentType.WIRE,
             )
             receipt_link = (
                 f"https://lknpd.nalog.ru/api/v1/receipt/"
