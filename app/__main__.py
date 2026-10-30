@@ -3,15 +3,14 @@ import logging.config
 from pathlib import Path
 
 import uvicorn
-
 from yookassa import Configuration
 
 from app.config_data.config_reader import (
-    get_config,
-    PaymentConfig,
     NalogConfig,
     NatsConfig,
+    PaymentConfig,
     ServerConfig,
+    get_config,
 )
 from app.loger.logging_settings import logging_config
 from app.nats_client.client import create_nats_connection
@@ -19,6 +18,9 @@ from app.server.webhook import create_app
 
 # Создаём директорию для логов, если её нет
 Path("./app/logs").mkdir(parents=True, exist_ok=True)
+
+# Файл со списком уже обработанных платежей (защита от повторных вебхуков)
+PROCESSED_PAYMENTS_PATH = Path("./app/data/processed_payments.json")
 
 logging.config.dictConfig(logging_config)
 logger = logging.getLogger(__name__)
@@ -50,6 +52,7 @@ async def main() -> None:
         nats_subject=nats_config.nats_yookassa_payment_subject,
         nalog_inn=nalog_config.inn.get_secret_value(),
         nalog_password=nalog_config.password.get_secret_value(),
+        processed_payments_path=PROCESSED_PAYMENTS_PATH,
     )
 
     # Запуск веб-сервера

@@ -48,23 +48,23 @@ class TestWebhook:
         assert response.status_code == 400
 
     def test_non_succeeded_status(self, client):
-        """Статус не succeeded — 202."""
+        """Статус не succeeded — 200 (действий не требуется)."""
         payload = _make_payload(status="pending")
         response = client.post(
             "/yookassa/webhook",
             json=payload,
         )
-        assert response.status_code == 202
+        assert response.status_code == 200
         assert response.json()["status"] == "pending"
 
     def test_no_object(self, client):
-        """Нет объекта платежа."""
+        """Нет объекта платежа — 500, чтобы ЮKassa повторила."""
         payload = {"event": "payment.succeeded", "status": "succeeded"}
         response = client.post(
             "/yookassa/webhook",
             json=payload,
         )
-        assert response.status_code == 202
+        assert response.status_code == 500
 
     @patch("app.server.webhook.Payment.find_one")
     @patch("app.server.webhook.create_nalog_receipt")
@@ -111,7 +111,7 @@ class TestWebhook:
 
     @patch("app.server.webhook.Payment.find_one")
     def test_payment_status_not_succeeded(self, mock_find_one, client):
-        """Платёж ещё не succeeded."""
+        """Платёж ещё не succeeded: в уведомлении статус pending — 200."""
         mock_find_one.return_value.status = "pending"
         mock_find_one.return_value.amount.value = "100.00"
         mock_find_one.return_value.metadata = {"telegram_id": "12345"}
@@ -119,4 +119,16 @@ class TestWebhook:
         payload = _make_payload(status="pending")
         response = client.post("/yookassa/webhook", json=payload)
 
-        assert response.status_code == 202
+        assert response.status_code == 200
+
+    @patch("app.server.webhook.Payment.find_one")
+    def test_succeeded_event_but_payment_not_ready(self, mock_find_one, client):
+        """Событие succeeded, но API отдаёт pending — 500 (нужен повтор)."""
+        mock_find_one.return_value.status = "pending"
+        mock_find_one.return_value.amount.value = "100.00"
+        mock_find_one.return_value.metadata = {"telegram_id": "12345"}
+
+        payload = _make_payload()
+        response = client.post("/yookassa/webhook", json=payload)
+
+        assert response.status_code == 500
